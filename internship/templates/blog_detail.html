@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ blog_post.title }}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .blog-image {
+            height: 400px;
+            object-fit: cover;
+        }
+        .content-section {
+            margin-top: 20px;
+        }
+        .content-section p {
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <img src="{{ blog_post.image.url }}" class="card-img-top blog-image" alt="{{ blog_post.title }}">
+            <div class="card-body">
+                <h2 class="card-title">{{ blog_post.title }}</h2>
+                <p class="card-text"><strong>Category:</strong> {{ blog_post.category.name }}</p>
+                <p class="card-text"><strong>Author:</strong> {{ blog_post.author.username }}</p>
+                <p class="card-text"><strong>Summary:</strong> {{ blog_post.summary }}</p>
+                <div class="content-section">
+                    <h5>Content:</h5>
+                    <p>{{ blog_post.content }}</p>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <small>Posted on {{ blog_post.created_at|date:"F j, Y, g:i a" }}</small>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

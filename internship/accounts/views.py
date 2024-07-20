@@ -1,10 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
-from .models import User, Patient, Doctor
+from .models import *
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from .decorators import user_type_required
+from django.core.files.storage import default_storage
+
 
 def signup_view(request):
     if request.method == 'POST':
@@ -79,3 +81,88 @@ def doctor_dashboard(request):
     if not request.user.is_doctor:
         return HttpResponseForbidden("You are not authorized to view this page.")
     return render(request, 'doctor_dashboard.html')
+
+
+
+
+@login_required
+def create_blog_post(request):
+    if not request.user.is_doctor:
+        return HttpResponseForbidden("You are not authorized to view this page.")
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        category_id = request.POST.get('category')
+        summary = request.POST.get('summary')
+        content = request.POST.get('content')
+        draft = request.POST.get('draft') == 'on'
+        image = request.FILES.get('image')
+        
+        category = Category.objects.get(id=category_id)
+        blog_post = BlogPost(
+            title=title,
+            category=category,
+            summary=summary,
+            content=content,
+            draft=draft,
+            author=request.user
+        )
+        if image:
+            blog_post.image = default_storage.save(f'blog_images/{image.name}', image)
+        blog_post.save()
+        return redirect('doctor_blog_list')
+
+    categories = Category.objects.all()
+    return render(request, 'create_blog_post.html', {'categories': categories})
+
+def doctor_blog_list(request):
+    if not request.user.is_doctor:
+        return HttpResponseForbidden("You are not authorized to view this page.")
+    
+    published_posts = BlogPost.objects.filter(author=request.user, draft=False)
+    draft_posts = BlogPost.objects.filter(author=request.user, draft=True)
+    
+    return render(request, 'doctor_blog_list.html', {
+        'published_posts': published_posts,
+        'draft_posts': draft_posts
+    })
+@login_required
+def patient_blog_list(request):
+    if not request.user.is_patient:
+        return HttpResponseForbidden("You are not authorized to view this page.")
+    
+    categories = Category.objects.all()
+    blog_posts_by_category = {category: BlogPost.objects.filter(category=category, draft=False) for category in categories}
+    
+    return render(request, 'patient_blog_list.html', {'blog_posts_by_category': blog_posts_by_category})
+
+
+
+@login_required
+def blog_detail(request, blog_id):
+    blog_post = get_object_or_404(BlogPost, id=blog_id)
+    if not request.user.is_doctor and blog_post.draft:
+        return HttpResponseForbidden("You are not authorized to view this page.")
+    
+    return render(request, 'blog_detail.html', {'blog_post': blog_post})
+
+
+@login_required
+def edit_blog_post(request, blog_id):
+    blog_post = get_object_or_404(BlogPost, id=blog_id)
+    if blog_post.author != request.user:
+        return HttpResponseForbidden("You are not authorized to edit this blog post.")
+    
+    if request.method == 'POST':
+        blog_post.title = request.POST.get('title')
+        blog_post.category_id = request.POST.get('category')
+        blog_post.summary = request.POST.get('summary')
+        blog_post.content = request.POST.get('content')
+        blog_post.draft = request.POST.get('draft') == 'on'
+        if request.FILES.get('image'):
+            blog_post.image = default_storage.save(f'blog_images/{request.FILES.get("image").name}', request.FILES.get('image'))
+        blog_post.save()
+        return redirect('doctor_blog_list')
+
+    categories = Category.objects.all()
+    return render(request, 'edit_blog_post.html', {'blog_post': blog_post, 'categories': categories})
