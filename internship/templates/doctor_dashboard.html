@@ -18,10 +18,10 @@
                     <a class="nav-link" href="#">Profile</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url "doctor_blog_list" %}">Blog</a>
+                    <a class="nav-link" href="{% url 'doctor_blog_list' %}">Blog</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url "logout" %}">Logout</a>
+                    <a class="nav-link" href="{% url 'logout' %}">Logout</a>
                 </li>
             </ul>
         </div>
@@ -53,6 +53,42 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="container mt-5">
+        <h2>Appointments</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Add to Calendar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appointment in appointments %}
+                <tr>
+                    <td>{{ appointment.patient.username }}</td>
+                    <td>{{ appointment.date }}</td>
+                    <td>{{ appointment.start_time }}</td>
+                    <td>{{ appointment.end_time }}</td>
+                    <td>
+                        {% with start_date=appointment.date|date:"Ymd" %}
+                        {% with start_time=appointment.start_time|stringformat:"HHi" %}
+                        {% with end_date=appointment.date|date:"Ymd" %}
+                        {% with end_time=appointment.end_time|stringformat:"HHi" %}
+                        <a href="https://calendar.google.com/calendar/u/0/r/eventedit?text=Appointment+with+{{ appointment.patient.username }}&dates={{ start_date }}/{{ end_date }}" class="btn btn-primary" target="_blank">Add to Google Calendar</a>
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

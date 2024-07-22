@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
+from datetime import datetime, timedelta
 
 class User(AbstractUser):
     is_patient = models.BooleanField(default=False)
@@ -54,3 +55,31 @@ class BlogPost(models.Model):
 
     def __str__(self):
         return self.title
+
+
+User = get_user_model()
+
+class Appointment(models.Model):
+    patient = models.ForeignKey(User, related_name='appointments', on_delete=models.CASCADE)
+    doctor = models.ForeignKey(User, related_name='doctor_appointments', on_delete=models.CASCADE)
+    speciality = models.CharField(max_length=100)
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    def save(self, *args, **kwargs):
+        # Convert date and start_time from strings to their respective objects if needed
+        if isinstance(self.date, str):
+            self.date = datetime.strptime(self.date, "%Y-%m-%d").date()
+        if isinstance(self.start_time, str):
+            self.start_time = datetime.strptime(self.start_time, "%H:%M").time()
+
+        # Calculate end time based on start time and duration (45 minutes)
+        start_datetime = datetime.combine(self.date, self.start_time)
+        end_datetime = start_datetime + timedelta(minutes=45)
+        self.end_time = end_datetime.time()
+        
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Appointment with {self.doctor} on {self.date} at {self.start_time}"

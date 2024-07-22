@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from .decorators import user_type_required
 from django.core.files.storage import default_storage
+from django.utils import timezone
 
 
 def signup_view(request):
@@ -73,16 +74,29 @@ def logout_view(request):
 def patient_dashboard(request):
     if not request.user.is_patient:
         return HttpResponseForbidden("You are not authorized to view this page.")
-    return render(request, 'patient_dashboard.html')
+    
+    # Get current date and time
+    now = timezone.now()
+    
+    # Fetch upcoming appointments
+    upcoming_appointments = Appointment.objects.filter(
+        patient=request.user,
+        date__gte=now.date(),
+        start_time__gte=now.time()
+    ).order_by('date', 'start_time')
 
+    return render(request, 'patient_dashboard.html', {
+        'upcoming_appointments': upcoming_appointments
+    })
 @login_required
 @user_type_required('doctor')
 def doctor_dashboard(request):
     if not request.user.is_doctor:
         return HttpResponseForbidden("You are not authorized to view this page.")
-    return render(request, 'doctor_dashboard.html')
-
-
+    
+    appointments = Appointment.objects.filter(doctor=request.user)
+    
+    return render(request, 'doctor_dashboard.html', {'appointments': appointments})
 
 
 @login_required
@@ -166,3 +180,37 @@ def edit_blog_post(request, blog_id):
 
     categories = Category.objects.all()
     return render(request, 'edit_blog_post.html', {'blog_post': blog_post, 'categories': categories})
+
+
+
+
+
+@login_required
+def list_doctors(request):
+    doctors = User.objects.filter(is_doctor=True)
+    return render(request, 'list_doctors.html', {'doctors': doctors})
+
+@login_required
+def book_appointment(request, doctor_id):
+    doctor = get_object_or_404(User, id=doctor_id, is_doctor=True)
+    if request.method == 'POST':
+        speciality = request.POST.get('speciality')
+        date = request.POST.get('date')
+        start_time = request.POST.get('start_time')
+
+        appointment = Appointment.objects.create(
+            patient=request.user,
+            doctor=doctor,
+            speciality=speciality,
+            date=date,
+            start_time=start_time
+        )
+        return redirect('appointment_detail', appointment_id=appointment.id)
+    return render(request, 'book_appointment.html', {'doctor': doctor})
+
+@login_required
+def appointment_detail(request, appointment_id):
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+    if request.user != appointment.patient and request.user != appointment.doctor:
+        return HttpResponseForbidden("You are not authorized to view this page.")
+    return render(request, 'appointment_detail.html', {'appointment': appointment})

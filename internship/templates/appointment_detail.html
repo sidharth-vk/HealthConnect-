@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Details</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Appointment Details</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Doctor: {{ appointment.doctor.get_full_name }}</h5>
+                <p class="card-text">Speciality: {{ appointment.speciality }}</p>
+                <p class="card-text">Date: {{ appointment.date }}</p>
+                <p class="card-text">Start Time: {{ appointment.start_time }}</p>
+                <p class="card-text">End Time: {{ appointment.end_time }}</p>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
